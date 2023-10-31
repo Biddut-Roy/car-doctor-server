@@ -35,7 +35,7 @@ const client = new MongoClient(uri, {
 
 // create  middleware
 const logger = async(req , res , next)=>{
-    console.log('called:', req.host , req.originalUrl);
+    console.log('called:', req.host , req.originalUrl , req.url , req.method);
     next()
 }
 
@@ -78,6 +78,23 @@ async function run() {
     
     })
 
+    // app.post('/jwt' , async(req, res) => {
+    //     const body = req.body;
+    //     const token = jwt.sign(body , process.env.App , { expiresIn: '30min'})
+    //     res
+    //         .cookie('token', token ,{
+    //             httpOnly: true,
+    //             secure: true,
+    //             sameSite: false,
+    //         })
+    //         .send({success:true})
+    // })
+
+    app.post('/logout', async (req, res)=>{
+        const body = req.body;
+        res.clearCookie('token',{maxAge:0}).send({success:true});
+    });
+
 
     // services
     app.get("/services" ,logger, async(req, res) => {
@@ -91,7 +108,7 @@ async function run() {
         // const options = {
         //     projection: { title: 1,price: 1 , img: 1 , _id: 1 },
         //   };
-        const result = await database.findOne( query);
+        const result = await database.findOne(query);
         res.send(result);
     })
 
@@ -99,7 +116,6 @@ async function run() {
     const CheckOutData = client.db("doctor_car").collection("CheckOut")
 
     app.get("/checkout", logger, verifyToken,async(req, res) => {
-
         console.log(req.user);
         if (req.query?.email !== req.user.email) {
             return res.status(401).send({message: 'access unauthorized'});
